@@ -2,7 +2,7 @@
 1. Run redis:
    docker run -d -p 6379:6379 --name rate-limit redis
 
-2. Go to http://localhost:8080/data/2.5/weather?countryCode=<country code>&city=<city>&state=<state>&appid=<api key>
+2. Go to http://localhost:8080/data/2.5/weather?countryCode={country code}&city={city}&state={state}&appid={api key}
    Available API keys:
    a28ae42703b8ca82b605807ce9f7b89e
    c282fc7b2c46abe3e2c994cfb57b5873
