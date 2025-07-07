@@ -1,5 +1,6 @@
 package codetest.openweathermap.model;
 
+import java.sql.Timestamp;
 import java.util.Objects;
 
 import jakarta.persistence.Entity;
@@ -14,6 +15,9 @@ public class OpenWeatherMapData {
     @Id
     @GeneratedValue
     private long id;
+    
+    @NotNull
+    private long unixTime; //unix time TODO convert to java time 
 
     @NotBlank
     private String city;
@@ -34,9 +38,11 @@ public class OpenWeatherMapData {
     @NotBlank
     private String weatherDesc;
 
-    public OpenWeatherMapData(String city, String state, String countryCode, double lat, double lon,
-            String weatherDesc) {
+    public OpenWeatherMapData(@NotNull long unixTime, @NotBlank String city, String state,
+            @NotBlank @Size(min = 2, max = 2) String countryCode, @NotNull double lat, @NotNull double lon,
+            @NotBlank String weatherDesc) {
         super();
+        this.unixTime = unixTime;
         this.city = city;
         this.state = state;
         this.countryCode = countryCode;
@@ -47,13 +53,14 @@ public class OpenWeatherMapData {
 
     @Override
     public String toString() {
-        return "OpenWeatherMapData [id=" + id + ", city=" + city + ", state=" + state + ", countryCode=" + countryCode
-                + ", lat=" + lat + ", lon=" + lon + ", weatherDesc=" + weatherDesc + "]";
+        return "OpenWeatherMapData [id=" + id + ", time=" + unixTime + ", city=" + city + ", state=" + state
+                + ", countryCode=" + countryCode + ", lat=" + lat + ", lon=" + lon + ", weatherDesc=" + weatherDesc
+                + "]";
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(city, countryCode, id, lat, lon, state, weatherDesc);
+        return Objects.hash(city, countryCode, id, lat, lon, state, unixTime, weatherDesc);
     }
 
     @Override
@@ -68,7 +75,16 @@ public class OpenWeatherMapData {
         return Objects.equals(city, other.city) && Objects.equals(countryCode, other.countryCode) && id == other.id
                 && Double.doubleToLongBits(lat) == Double.doubleToLongBits(other.lat)
                 && Double.doubleToLongBits(lon) == Double.doubleToLongBits(other.lon)
-                && Objects.equals(state, other.state) && Objects.equals(weatherDesc, other.weatherDesc);
+                && Objects.equals(state, other.state) && unixTime == other.unixTime
+                && Objects.equals(weatherDesc, other.weatherDesc);
+    }
+
+    public long getUnixTime() {
+        return unixTime;
+    }
+
+    public void setUnixTime(long unixTime) {
+        this.unixTime = unixTime;
     }
 
     public String getCity() {

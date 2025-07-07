@@ -32,13 +32,16 @@ public class OpenWeatherMapController {
     @Autowired
     ProxyManager<String> proxyManager;
     
+    @Autowired
     public OpenWeatherMapController(OpenWeatherMapService service) {
         this.service = service;
     }
 
     @GetMapping("/data/2.5/weather")
-    public ResponseEntity<Object> obtainWeather(@RequestParam String countryCode, @RequestParam String city, 
+    public ResponseEntity<Object> obtainAndSaveWeatherData(@RequestParam String countryCode, @RequestParam String city, 
             @RequestParam String state, @RequestParam String appid) {
+        
+        // check for API rate limiting 
         Bucket bucket = proxyManager
                 .builder()
                 .build(appid, bucketConfig);
@@ -51,8 +54,15 @@ public class OpenWeatherMapController {
                             "error", "Too many requests"));
         
         try {
-            OpenWeatherMapData weatherData = service.saveWeatherData(countryCode, city, state, appid);
+            // 1. call Open Weather Map API and obtain weather data 
+            OpenWeatherMapData weatherData = service.obtainWeatherDataFromOpenWeatherAPI(countryCode, city, state,
+                    appid);
+            
+            // 2. save weather data to DB
+            service.saveWeatherData(weatherData);
+            
             return ResponseEntity.status(HttpStatus.CREATED)//.ok(weatherDesc);
+        //        .build()
                     .body(city + ", " + state + ", " + countryCode.toUpperCase() + ": " + weatherData.getWeatherDesc());
         } catch (HttpClientErrorException e) {
             // HTTP 401 - invalid API key

@@ -1,5 +1,6 @@
 package codetest.openweathermap.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -19,35 +20,36 @@ public class OpenWeatherMapService {
 
     private OpenWeatherMapRepository repository;
 
+    @Autowired
     public OpenWeatherMapService(OpenWeatherMapRepository repository) {
         this.repository = repository;
     }
-    
-    public OpenWeatherMapData saveWeatherData(String countryCode, String city, String state, String appid)
-            throws InvalidLocationException, JsonProcessingException {
+        
+    public OpenWeatherMapData obtainWeatherDataFromOpenWeatherAPI(String countryCode, String city, String state,
+            String appid) throws InvalidLocationException, JsonProcessingException {
         
         // 1. call geocoding API 
         RestClient restClient = RestClient.create();
-//        String apiKey = "4557160042b4140d3f203916a2860718";
         String geocodingResponse;
         if(state.isBlank())
             geocodingResponse = restClient.get()
                     .uri(GEOCODING_API_URL, city, countryCode, 1, appid)
                     .retrieve()
-                    .body(String.class); // may generate HttpClientErrorException HTTP 401
+                    .body(String.class); // may throw HttpClientErrorException HTTP 401
         else
             geocodingResponse = restClient.get()
                     .uri(GEOCODING_API_URL_US, city, state, countryCode, 1, appid)
                     .retrieve()
-                    .body(String.class); // may generate HttpClientErrorException HTTP 401
+                    .body(String.class); // may throw HttpClientErrorException HTTP 401
         System.out.println(geocodingResponse);
 
         ObjectMapper objectMapper = new ObjectMapper();
         
         JsonNode geocodingNode = objectMapper.readTree(geocodingResponse);
         
-        if(geocodingNode.get(0) == null)
-            throw new InvalidLocationException();
+        if(geocodingNode.get(0) == null) // geocoding is not found
+            throw new InvalidLocationException("Invalid location based on input city " + city + ", state " + state
+                    + "country code " + countryCode);
         
         double lattitude = geocodingNode.get(0)
                 .get("lat")
@@ -71,12 +73,15 @@ public class OpenWeatherMapService {
                 .textValue();
         System.out.println(weatherDesc);
         
-        // 3. save weather data to DB
-        OpenWeatherMapData weatherDataDTO = new OpenWeatherMapData(city, state, countryCode, lattitude, longitude,
-                weatherDesc);
+        long unixTime = weatherDataNode.get("dt")
+                .asLong();
         
-        // 4. return weather description to client 
-
-        return repository.save(weatherDataDTO);
+        OpenWeatherMapData weatherDataDTO = new OpenWeatherMapData(unixTime, city, state, countryCode, lattitude,
+                longitude, weatherDesc);
+        return weatherDataDTO;
+    }
+    
+    public OpenWeatherMapData saveWeatherData(OpenWeatherMapData dto) {
+        return repository.save(dto);
     }
 }
