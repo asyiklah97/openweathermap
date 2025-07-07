@@ -10,5 +10,3 @@
    <br> 1ad94ffe531f6277f996a2a801c662da
    <br> 314e8288634543dcc5e9bac7a1327214
 
-Known issue:
-Current date is not saved in DB. 
