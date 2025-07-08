@@ -56,12 +56,12 @@ public class OpenWeatherMapController {
         try {
             // 1. call Open Weather Map API and obtain weather data 
             OpenWeatherMapData weatherData = service.obtainWeatherDataFromOpenWeatherAPI(countryCode, city, state,
-                    appid);
+                    appid); 
             
             // 2. save weather data to DB
             service.saveWeatherData(weatherData);
             
-            return ResponseEntity.status(HttpStatus.CREATED)//.ok(weatherDesc);
+            return ResponseEntity.status(HttpStatus.CREATED)
         //        .build()
                     .body(city + ", " + state + ", " + countryCode.toUpperCase() + ": " + weatherData.getWeatherDesc());
         } catch (HttpClientErrorException e) {
@@ -76,14 +76,22 @@ public class OpenWeatherMapController {
                     .body(Map.of(
                             "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
                             "error", "Internal server error",
-                            "message", "Error in processing JSON", //TODO "Error in processing geocoding response JSON: " + geocodingResponse,
+                            "message", e.getMessage(), //TODO "Error in processing geocoding response JSON: " + geocodingResponse,
                             "Exception stack trace", e));
         } catch (InvalidLocationException e) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of(
-                            "status", HttpStatus.NOT_ACCEPTABLE.value(),
-                            "error", "not acceptable",
-                            "message", "city and/or country code is not acceptable"));
+                            "status", HttpStatus.NOT_FOUND.value(),
+                            "error", "Not found",
+                            "message", "Invalid input location - " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                            "error", "Internal server error",
+                            "message", e.getMessage(),
+                            "Exception stack trace", e));
+
         }
     }
 }
